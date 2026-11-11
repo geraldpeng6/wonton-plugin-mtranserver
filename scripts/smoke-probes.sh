@@ -12,7 +12,11 @@ marker_file() { # SMOKE_STATE 在套件里是状态目录（e2e 传的是标记�
   if [[ -d "$SMOKE_STATE" ]]; then printf '%s' "$SMOKE_STATE/mtranserver-marker"; else printf '%s' "${SMOKE_STATE}.marker"; fi
 }
 
-plugin_container() { echo "wonton-$SMOKE_INSTANCE--$SMOKE_SLUG--mtranserver"; }
+# 插件容器名是 wonton-<实例>--<slug把点换成连字符>--<服务>；e2e 套件不一定备好 SMOKE_SLUG，
+# 按实例名从 Docker 里找（实例名在一次冒烟里唯一）。
+plugin_container() {
+  docker ps --format '{{.Names}}' | grep -E "^wonton-${SMOKE_INSTANCE:-}--.+--mtranserver$" | head -1
+}
 
 data_write() {
   local marker out
@@ -25,10 +29,12 @@ data_write() {
 }
 
 data_check() { # 模型目录还在（en_zh-Hans），同一句翻得出来
-  local marker out files
+  local marker out box files
   marker="$(cat "$(marker_file)")"
   [[ -n "$marker" ]] || { echo "SMOKE_STATE 里没有标记"; return 1; }
-  files="$(docker exec "$(plugin_container)" sh -c 'ls /app/models 2>/dev/null')" ||
+  box="$(plugin_container)"
+  [[ -n "$box" ]] || { echo "找不到本实例的 mtranserver 容器"; return 1; }
+  files="$(docker exec "$box" sh -c 'ls /app/models 2>/dev/null')" ||
     { echo "列不出模型目录"; return 1; }
   grep -q 'en_zh-Hans' <<<"$files" || { echo "模型目录里没有 en_zh-Hans，下载的模型没保住：$files"; return 1; }
   out="$(dweb /translate -X POST -H 'Content-Type: application/json' \
