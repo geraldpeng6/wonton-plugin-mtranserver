@@ -1,43 +1,40 @@
-# 云吞插件模板
+# 云吞插件：离线翻译（MTranServer）
 
-开发流程见[插件开发指南](https://github.com/wontonapp/wonton-docs/blob/main/develop.md)。
+把 [MTranServer](https://github.com/xxnuo/MTranServer)（Apache-2.0）包装成云吞插件：在家里服务器的 CPU 上跑
+本地翻译模型，浏览器翻译扩展和带 DeepL / DeepLX / Google 翻译接口的软件都能连。
 
-这是一个能安装的示例插件 `app.example.hello`：使用 nginx 官方镜像显示问候页，经网关的 `sso: proxy` 注入用户名，页面显示“你好，<用户名>”。示例没有应用账号、持久化数据或 MCP 工具。
+## 怎么用
 
-## 示例文件
+- 打开网页就能翻译：选择语言方向、贴文本。网页不用做任何设置——网关登录后自动带上 API 令牌。
+- 浏览器扩展（沉浸式翻译、简约翻译、划词翻译等）在插件详情里打开“在局域网开放”后连接：
+  详情页显示地址和令牌，按扩展要求填（不同扩展的路径见下表，令牌同一个）。
 
-| 路径 | 内容 |
+| 扩展 / 客户端 | 局域网地址 |
 | --- | --- |
-| `docker-compose.yml` | 示例清单、nginx 服务和三个 `configs` |
-| `web/default.conf.template` | nginx 配置，启用 SSI 回显用户名并提供健康检查入口；只放行来自核心地址（`${WONTON_CORE_ADDRESS}`）的请求，其余来源 403 |
-| `web/index.html` | 问候页 |
-| `web/tokens.css` | 页面主题变量的后备值 |
-| `tabs/` | 示例主页的应用页面图标 |
-| `screenshots/home.png` | 商店详情页的示例截图 |
-| `scripts/smoke-probes.sh` | 检查真实页面和网关注入身份的插件探针 |
+| 沉浸式翻译（Immersive Translate） | `http://<地址>:8989/imme?token=<令牌>` |
+| 简约翻译（KISS Translator） | `http://<地址>:8989/kiss`，KEY 填令牌 |
+| DeepL API 客户端 | `http://<地址>:8989/deepl`，`DeepL-Auth-Key` 或 `Bearer` |
+| DeepLX 客户端 | `http://<地址>:8989/deeplx?token=<令牌>`，或 `Bearer` |
+| 划词翻译 | `http://<地址>:8989/hcfy?token=<令牌>` |
+| Google Translate API v2 客户端 | `http://<地址>:8989/google/language/translate/v2?key=<令牌>` |
 
-从模板创建自己的插件后，替换示例清单、网页和素材；具体步骤见[写插件](https://github.com/wontonapp/wonton-docs/blob/main/develop.md#写插件)。
+- 翻译扩展连的是局域网端口，人不在家时用不了；网页翻译经云吞的远程访问照常能用。
 
-## 对着别的栈跑探针
+## 数据在哪、怎么备份
 
-`probes`、`api`、`session` 按 `.wonton/.env` 的 `WONTON_BASE_DOMAIN` 拼核心地址，`up` 起的栈自己写这个键。插件装进别人的栈、或者对着已有环境排查时，把那套栈的基础域名写进 `.wonton/.env`，不要只按实例名猜地址：实例名只是资源名前缀，网关按 Host 认域名，拼错了会回“没有安装”。
+- `${WONTON_APP_DATA}/config/`：模型索引 records.json、UI 保存的设置（server.json）、日志目录。
+- `${WONTON_APP_DATA}/models/`：已下载的翻译模型文件。
+- 换机器或迁移时这两个目录都要带走（与上游 README 的要求一致）。
 
-```bash
-WONTON_BASE_DOMAIN=wonton.localhost
-```
+## 已知限制
 
-## 核心镜像
-
-检查和冒烟默认用套件里的核心镜像（`ghcr.io/wontonapp/wonton-core:main`）；要固定别的核心镜像，在仓库 Settings → Variables 设 `WONTON_CORE_IMAGE`，手动触发“检查”时填的 `core-image` 输入优先。
-
-## 更新开发套件
-
-```bash
-scripts/dev.sh kit-update
-```
-
-在从模板新建的插件仓库中更新套件；本仓库是套件源头，执行时只提示并退出。版本、可选引用和自定义脚本约定见[开发指南](https://github.com/wontonapp/wonton-docs/blob/main/develop.md#更新开发套件)。
+- 第一次翻译某个语言方向时要联网下载模型文件（几十到一百多 MB，来自 Mozilla 的 Firefox 翻译模型源，
+  需要出网权限），之后该方向离线可用；服务器断网时新方向翻不了。
+- 翻译质量适合日常阅读和理解大意，重要内容请核对原文。
+- 翻译速度和内存占用取决于服务器配置；英译中峰值内存约 400 MB。
+- 网页里的 API 文档（`/docs`）和上游一致，不做改动。
 
 ## 图标
 
-`icon.svg` 是本仓库原创线条图标，按本仓库 MIT 许可证分发，见 [NOTICE](NOTICE)。
+`icon.png` 来自上游官方标志（v5.1.1 `images/icon.png`，合成到白色底上），来源、版权和许可见
+[NOTICE](NOTICE)。

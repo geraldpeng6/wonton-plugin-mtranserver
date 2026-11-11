@@ -1,78 +1,87 @@
-# 示例插件：nginx 显示一个网页，向登录的人问好。改成自己的应用见 https://github.com/wontonapp/wonton-docs/blob/main/develop.md#写插件。
+# MTranServer 离线翻译：家里的 CPU 跑本地翻译模型，浏览器翻译扩展连局域网端口，网页经核心网关（代注入 API 令牌）。
+# 上游 xxnuo/MTranServer，Apache-2.0，镜像按清单列表（index）的摘要固定。
+# 镜像默认只跑 CPU（GPU 由上游单独的 compose 提供，不做），以 root 运行，数据目录由核心交给 PUID:PGID。
 services:
-  web:
-    # 镜像按摘要固定（多架构镜像写清单列表的摘要），标签只给人看。
-    image: nginx:1.31.8-alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11
+  mtranserver:
+    image: xxnuo/mtranserver:5.1.1@sha256:2f0301ddeda29b8820926e841343252d35f2bef29b45c7fe02260ffbab0c8f2b
     environment:
-      # 网关代登录：SSI 回显的 Remote-User 只信核心带来的。官方镜像启动时对 templates 目录里的
-      # *.template 做 envsubst，把下面的地址换进 nginx 配置（见 web/default.conf.template）。
-      WONTON_CORE_ADDRESS: ${WONTON_CORE_ADDRESS}
-    # 包里的文件经 configs 交给容器（核心在启动前写进去），不能用卷挂载。
-    configs:
-      - source: site
-        target: /etc/nginx/templates/default.conf.template
-      - source: page
-        target: /usr/share/nginx/html/index.html
-      - source: tokens
-        target: /usr/share/nginx/html/tokens.css
+      MT_PORT: "8989"
+      # 配置（records.json 模型索引、UI 保存的 server.json、日志）和模型各自一个目录，换机器都要带走。
+      # server.json 固定写在 homeDir（/root/.config/mtran）而非 MT_CONFIG_DIR，所以挂整个 mtran 目录。
+      MT_CONFIG_DIR: /root/.config/mtran/server
+      MT_MODEL_DIR: /app/models
+      # 保持联网模式：首次翻译一个语言方向时自动下载模型文件，之后同一方向离线可用。
+      MT_OFFLINE: "false"
+      MT_API_TOKEN: ${WONTON_SECRET_API_TOKEN}
+    volumes:
+      - ${WONTON_APP_DATA}/config:/root/.config/mtran
+      - ${WONTON_APP_DATA}/models:/app/models
+    # 镜像没有 curl/wget，用自带的 node 调无鉴权的 /health。
+    # 出网代理开着时核心注入的 NO_PROXY 含回环，检查不会被送去代理。
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8989/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
-      start_period: 30s
-      start_interval: 1s
-
-configs:
-  site:
-    file: web/default.conf.template
-  page:
-    file: web/index.html
-  tokens:
-    file: web/tokens.css
+      start_period: 60s
+      start_interval: 2s
 
 x-wonton:
-  spec: "0.6"
-  # 换成你自己的：反向域名形式，装上以后不能改。
-  id: app.example.hello
-  version: 0.1.1
+  spec: "0.12"
+  id: app.github.xxnuo.mtranserver
+  version: 0.1.0
   kind: app
-  title: { zh: 你好, en: Hello }
-  description: { zh: 向登录的人问好的示例网页, en: An example page that greets whoever is signed in }
-  icon: icon.svg
+  title: { zh: 离线翻译（MTranServer）, en: Offline Translation (MTranServer) }
+  description:
+    zh: 在自己家里跑的翻译服务，像翻译网站一样好用：浏览器翻译扩展接上它，整页、划词都能翻，文字不出家门。
+    en: "A translation service running at home, like the online ones: browser translate extensions plug into it, and your text never leaves home."
+  icon: icon.png
   notices: [NOTICE]
-  screenshots: [screenshots/home.png]
-  author: { name: Example }
-  homepage: https://nginx.org
-  # 应用（这里是 nginx）的许可证；插件包自己的许可证写在仓库的 LICENSE 里。
-  license: BSD-2-Clause
+  screenshots: [screenshots/home.png, screenshots/history.png]
+  author: { name: geraldpeng6, url: https://github.com/geraldpeng6 }
+  homepage: https://github.com/xxnuo/MTranServer
+  # 应用（MTranServer）的许可证；插件包自己的许可证写在仓库的 LICENSE 里。
+  license: Apache-2.0
   tags:
-    zh: [工具]
-    en: [Tools]
+    zh: [工具, 翻译]
+    en: [Tools, Translation]
   about:
     zh: |
-      一个示例网页：登录以后，页面会向你问好。新建插件时可以照着改。
+      翻译在自己家里的 CPU 上完成，不用显卡：速度取决于电脑配置和文本长度，日常阅读、看懂大意都够快。
+
+      打开网页就能翻译；在浏览器里装沉浸式翻译、简约翻译、划词翻译这类扩展，把翻译服务指到这台服务器上，读外文网页就不用一段段复制了。支持 DeepL、DeepLX、Google 翻译接口的软件也能接。
+
+      网页里的翻译不用任何设置。浏览器扩展要连的地址和令牌：在插件详情里打开“在局域网开放”，把显示的地址和令牌填进扩展。第一次翻某个语言方向时会联网下载翻译文件（几十到一百多 MB），之后这个方向就离线可用。
     en: |
-      An example page: once you are signed in, the page says hello. Copy it as a starting point for a new plugin.
-  release_notes: { zh: 名字和说明更新。, en: Product name and description update. }
+      Translation runs on your home CPU, no graphics card needed: speed depends on the machine and text length, and everyday reading is plenty fast.
+
+      The web page works out of the box; in a browser with an extension like Immersive Translate, KISS Translator or 划词翻译, point the translation service at this server and read foreign pages without copy-pasting. Software that speaks the DeepL, DeepLX or Google Translate APIs works too.
+
+      Translating on the web page needs no setup. For the address and token your browser extension needs, turn on the LAN switch in the plugin details and copy what is shown there. The first translation in a language pair downloads its model files (tens to over a hundred MB); after that the pair works offline.
+  release_notes: { zh: 第一版。, en: First release. }
   webui:
-    service: web
-    port: 80
-    # 示例页回显网关注入的用户名，见 https://github.com/wontonapp/wonton-docs/blob/main/plugin-spec.md#网关代登录sso-proxy。
+    service: mtranserver
+    port: 8989
+    # 应用不认用户，只认自己的 API 令牌：网关代注入 Authorization: Bearer，网页里的翻译不用用户再填令牌。
     sso: proxy
     proxy:
       headers:
-        Remote-User: "{user}"
-  # 能放进侧边栏“我的应用”的页面，见 https://github.com/wontonapp/wonton-docs/blob/main/plugin-spec.md#应用页面tabs。放不放由用户决定。
-  tabs:
-    - id: home
-      title: { zh: 主页, en: Home }
-      icon: tabs/home.svg
-      icon_selected: tabs/home-fill.svg
-      path: /
-      # 这个页面没做适配，用默认的 inset：从状态栏下沿开始，页面不用管安全区。
-      # 想让内容从状态栏后面滚过，写 layout: edge-to-edge，并用 --wonton-inset-* 留出系统安全区的位置。
-  permissions: []
-  # 上游 nginx 官方镜像，amd64 和 arm64 都有；上游没写最低内存，按本机空闲实测取整（实测约 24M，取 64M）。
+        Authorization: "Bearer {secret:api_token}"
+  # 浏览器翻译扩展连这个端口（8989 同时是网页端口，受 lan_webui 开关管，默认关）。
+  # 详情页“局域网开放”打开后显示端口地址；令牌用 show_owner 给主人看（lan.client 要求 username，
+  # 这个应用只有令牌没有账号，见 DONE 的“底座问题”）。
+  lan:
+    ports:
+      - { service: mtranserver, port: 8989 }
+  secrets:
+    api_token:
+      generate: { bytes: 24 }
+      show_owner: { label: { zh: API 令牌, en: API token } }
+  permissions:
+    # 首次翻译一个语言方向时从 Mozilla 的模型源下载文件（Firefox 翻译模型）。
+    - network.egress
+    # 翻译扩展在局域网里直连，8989 同时是网页端口，由 lan_webui 开关管（默认关）。
+    - network.lan
+  # 上游没写最低内存：官方数据英译中峰值约 392 MiB，加余量取 512M。
   requirements:
     arch: [amd64, arm64]
-    memory: 64M
+    memory: 512M

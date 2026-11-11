@@ -1,7 +1,14 @@
 图标
 ====
 
-`icon.svg` 为本仓库原创，按插件规范的线条风格手写，未用图片模型生成。从模板新建的插件换成自己的图标时，这里按实际情况重写。
+`icon.png` 用上游官方标志制作：取自 xxnuo/MTranServer 仓库 v5.1.1 的 `images/icon.png`（2048×2048，透明底），
+按原始内容裁剪后居中合成到白色正方形底上，缩放至 512×512。标志内容未改动。
+
+- 来源：https://github.com/xxnuo/MTranServer/blob/v5.1.1/images/icon.png
+- 版权：Copyright (c) xxnuo（MTranServer 作者）
+- 许可：Apache License 2.0（全文见上游仓库的 LICENSE 文件：https://github.com/xxnuo/MTranServer/blob/v5.1.1/LICENSE ）
+- 商标说明："MTranServer" 及其标志是该项目的名称和标识，本插件用它标识所包装的上游应用，
+  不构成对该商标的占有或修改。
 
 许可证
 ------
