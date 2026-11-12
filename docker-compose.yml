@@ -56,7 +56,7 @@ x-wonton:
 
       The web page works out of the box; in a browser with an extension like Immersive Translate, KISS Translator or 划词翻译, point the translation service at this server and read foreign pages without copy-pasting. Software that speaks the DeepL, DeepLX or Google Translate APIs works too.
 
-      Translating on the web page needs no setup. The LAN address for your browser extension is shown at install time and in the cloud's LAN settings, and the token is on the plugin details page under "API token". The first translation in a language pair downloads its model files (tens to over a hundred MB); after that the pair works offline.
+      Translating on the web page needs no setup. The LAN address for your browser extension is shown at install time and in Wonton's LAN settings, and the token is on the plugin details page under "API token". The first translation in a language pair downloads its model files (tens to over a hundred MB); after that the pair works offline.
   release_notes: { zh: 第一版。, en: First release. }
   webui:
     service: mtranserver
