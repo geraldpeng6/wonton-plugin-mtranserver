@@ -31,7 +31,7 @@ services:
   # 翻译、检测都是只读计算（不写任何数据）；spec 里 summary 以查询动词开头，适配器据此给 POST 工具
   # 标只读（否则总线上每次调用都要用户确认）。
   mcp:
-    image: ghcr.io/geraldpeng6/mcp-openapi-proxy:0.4.0@sha256:PENDING
+    image: ghcr.io/geraldpeng6/mcp-openapi-proxy:0.4.0@sha256:f18d836e3c50061ec166f1b4a2fa27739183da37191ebd4a6374b683354b73bc
     user: "${PUID}:${PGID}"
     read_only: true
     environment:
