@@ -6,6 +6,24 @@ export SMOKE_NOTE="无账号体系，API 令牌由网关代注入；局域网令
 
 web_assert() { grep -qi 'MTranServer'; }   # 标准输入：SPA 首页 HTML 的 <title>
 
+# MCP 探针：mcp_check 一次核对两件事——
+# 1) tools/list 里 POST 的翻译工具也标了 readOnlyHint=true（spec 的 summary 以查询动词开头，
+#    适配器据此标注；没标的话总线上每次翻译都要弹确认卡）；
+# 2) 真实调用只读工具 get_languages，返回支持的语言（不依赖翻译模型，首次安装即有）。
+mcp_check() {
+  local tool out
+  for tool in post_detect post_translate post_translate_batch; do
+    if [[ "$(jq -r --arg s "$SMOKE_SLUG" --arg t "$tool" \
+        '.[] | select(.name == $s + "__" + $t) | .annotations.readOnlyHint // "missing"' "$SMOKE_TOOLS")" != true ]]; then
+      echo "$tool 没标只读"
+      return 1
+    fi
+  done
+  out="$(mcp call "$SMOKE_MCP_URL" "${SMOKE_SLUG}__get_languages" '{}')" || return 1
+  jq -e '.content[0].text | fromjson | (.languages | index("en")) and (.languages | index("zh-Hans"))' \
+    <<<"$out" >/dev/null || { echo "语言列表里没有 en / zh-Hans：$(head -c 200 <<<"$out")"; return 1; }
+}
+
 # 插件的用户数据是下载好的翻译模型和配置：翻一句带随机标记的英文（首次触发 en→zh-Hans 的模型下载，
 # 可能要几分钟），标记存进 $SMOKE_STATE，重装后核对。
 marker_file() { # SMOKE_STATE 在套件里是状态目录（e2e 传的是标记文件本身）

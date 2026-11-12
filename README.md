@@ -21,6 +21,13 @@
 
 - 翻译扩展连的是局域网端口，人不在家时用不了；网页翻译经云吞的远程访问照常能用。
 
+## 家里的 AI 助手
+
+装好后云吞里的 AI 助手（Bot）也能帮你翻译：翻译一段话、检测语言、列出支持的语言，都是只读查询，翻译在家里
+完成。实现是 `mcp/openapi.json` 手写的接口规范加 [mcp-openapi-proxy](https://github.com/matthewhand/mcp-openapi-proxy)
+0.4.0 适配器（上游没有发官方镜像，镜像由 kiwix 插件仓库构建发布、两个插件共用；MIT，见 [NOTICE](NOTICE)）。
+适配器用插件已有的 API 令牌连上游（`Authorization: Bearer`）。
+
 ## 数据在哪、怎么备份
 
 - `${WONTON_APP_DATA}/config/`：模型索引 records.json、UI 保存的设置（server.json）、日志目录。
