@@ -42,6 +42,12 @@ services:
       SERVER_URL_OVERRIDE: http://mtranserver:8989
       # 上游认 Bearer 令牌：适配器对上游发 Authorization: Bearer <API_KEY>，复用插件已有的密钥。
       API_KEY: ${WONTON_SECRET_API_TOKEN}
+      # 适配器只连插件网络里的上游，不出网：代理变量写空（写成空=这个服务不走代理）。
+      # python 客户端会读这些变量，服务名不在 NO_PROXY 名单里时内网请求会被送去出网代理，报 502。
+      HTTP_PROXY: ""
+      HTTPS_PROXY: ""
+      http_proxy: ""
+      https_proxy: ""
     configs:
       - source: openapi
         target: /mcp/openapi.json
