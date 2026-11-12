@@ -10,6 +10,14 @@
 - 商标说明："MTranServer" 及其标志是该项目的名称和标识，本插件用它标识所包装的上游应用，
   不构成对该商标的占有或修改。
 
+MCP 适配器
+==========
+
+mcp 服务用的镜像基于 mcp-openapi-proxy（https://github.com/matthewhand/mcp-openapi-proxy），
+版本 0.4.0，MIT License。镜像只是 pip 安装上游包，没有改它的源码（镜像由 kiwix 插件仓库构建发布，
+两个插件共用）；MIT 许可证全文见上游仓库的 LICENSE 文件
+（https://github.com/matthewhand/mcp-openapi-proxy/blob/v0.4.0/LICENSE）。
+
 许可证
 ------
 
