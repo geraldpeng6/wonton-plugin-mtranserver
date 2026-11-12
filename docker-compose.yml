@@ -50,13 +50,13 @@ x-wonton:
 
       打开网页就能翻译；在浏览器里装沉浸式翻译、简约翻译、划词翻译这类扩展，把翻译服务指到这台服务器上，读外文网页就不用一段段复制了。支持 DeepL、DeepLX、Google 翻译接口的软件也能接。
 
-      网页里的翻译不用任何设置。浏览器扩展要连的地址和令牌：在插件详情里打开“在局域网开放”，把显示的地址和令牌填进扩展。第一次翻某个语言方向时会联网下载翻译文件（几十到一百多 MB），之后这个方向就离线可用。
+      网页里的翻译不用任何设置。浏览器扩展要连的地址在安装时的提示和云吞的局域网设置里，令牌在插件详情页的“API 令牌”里查看，照扩展要求填进去就行。第一次翻某个语言方向时会联网下载翻译文件（几十到一百多 MB），之后这个方向就离线可用。
     en: |
       Translation runs on your home CPU, no graphics card needed: speed depends on the machine and text length, and everyday reading is plenty fast.
 
       The web page works out of the box; in a browser with an extension like Immersive Translate, KISS Translator or 划词翻译, point the translation service at this server and read foreign pages without copy-pasting. Software that speaks the DeepL, DeepLX or Google Translate APIs works too.
 
-      Translating on the web page needs no setup. For the address and token your browser extension needs, turn on the LAN switch in the plugin details and copy what is shown there. The first translation in a language pair downloads its model files (tens to over a hundred MB); after that the pair works offline.
+      Translating on the web page needs no setup. The LAN address for your browser extension is shown at install time and in the cloud's LAN settings, and the token is on the plugin details page under "API token". The first translation in a language pair downloads its model files (tens to over a hundred MB); after that the pair works offline.
   release_notes: { zh: 第一版。, en: First release. }
   webui:
     service: mtranserver
@@ -66,9 +66,9 @@ x-wonton:
     proxy:
       headers:
         Authorization: "Bearer {secret:api_token}"
-  # 浏览器翻译扩展连这个端口（8989 同时是网页端口，受 lan_webui 开关管，默认关）。
-  # 详情页“局域网开放”打开后显示端口地址；令牌用 show_owner 给主人看（lan.client 要求 username，
-  # 这个应用只有令牌没有账号，见 DONE 的“底座问题”）。
+  # 浏览器翻译扩展连这个端口。8989 同时是网页端口，但代注入只用 {secret:…}、不代用户身份，
+  # 核心判定不需要 lan_webui 开关：端口装好就开（实测确认）。
+  # 令牌用 show_owner 给主人看（lan.client 要求 username，这个应用只有令牌没有账号，见 DONE 的“底座问题”）。
   lan:
     ports:
       - { service: mtranserver, port: 8989 }
@@ -79,7 +79,7 @@ x-wonton:
   permissions:
     # 首次翻译一个语言方向时从 Mozilla 的模型源下载文件（Firefox 翻译模型）。
     - network.egress
-    # 翻译扩展在局域网里直连，8989 同时是网页端口，由 lan_webui 开关管（默认关）。
+    # 翻译扩展在局域网里直连（装好后即开放；装在不可信局域网时注意已知限制，见 README）。
     - network.lan
   # 上游没写最低内存：官方数据英译中峰值约 392 MiB，加余量取 512M。
   requirements:
