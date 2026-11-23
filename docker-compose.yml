@@ -3,7 +3,7 @@
 # 镜像默认只跑 CPU（GPU 由上游单独的 compose 提供，不做），以 root 运行，数据目录由核心交给 PUID:PGID。
 services:
   mtranserver:
-    image: xxnuo/mtranserver:5.1.1@sha256:2f0301ddeda29b8820926e841343252d35f2bef29b45c7fe02260ffbab0c8f2b
+    image: xxnuo/mtranserver:5.4.6@sha256:308d4c881cc31bc3f038dc125666e1b38929b79051922834eabf76b148a4d865
     environment:
       MT_PORT: "8989"
       # 配置（records.json 模型索引、UI 保存的 server.json、日志）和模型各自一个目录，换机器都要带走。
